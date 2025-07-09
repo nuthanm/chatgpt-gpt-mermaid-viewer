@@ -7,8 +7,8 @@
   },
   "servers": [
     {
-      "url": "https://mermaid-viewer.onrender.com",
-      "description": "Vercel host for Mermaid Live Preview"
+      "url": "https://chatgpt-gpt-mermaid-viewer-production.up.railway.app",
+      "description": "Railway host for Mermaid Live Preview"
     }
   ],
   "paths": {
