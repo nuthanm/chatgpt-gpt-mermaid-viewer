@@ -9,9 +9,9 @@
   },
   "api": {
     "type": "openapi",
-    "url": "https://nuthanm.github.io/chatgpt-gpt-mermaid-viewer/.well-known/openapi.json"
+    "url": "https://chatgpt-gpt-mermaid-viewer-production.up.railway.app/.well-known/openapi.json"
   },
-  "logo_url": "https://nuthanm.github.io/chatgpt-gpt-mermaid-viewer/logo.png",
+  "logo_url": "https://chatgpt-gpt-mermaid-viewer-production.up.railway.app/logo.png",
   "contact_email": "inbox.nuthanm@gmail.com",
-  "legal_info_url": "https://nuthanm.github.io/chatgpt-gpt-mermaid-viewer/legal.html"
+  "legal_info_url": "https://chatgpt-gpt-mermaid-viewer-production.up.railway.app/legal.html"
 }
