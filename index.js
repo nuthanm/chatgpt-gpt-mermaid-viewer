@@ -30,7 +30,8 @@ app.post("/render", async (req, res) => {
 
   // Run Mermaid CLI
   exec(
-    `npx mmdc -i "${inputPath}" -o "${outputPath}"`,
+    `npx mmdc -i "${inputPath}" -o "${outputPath}" --puppeteerConfigFile puppeteer-config.json`,
+
     (err, stdout, stderr) => {
       // Clean up input file
       fs.unlinkSync(inputPath);
