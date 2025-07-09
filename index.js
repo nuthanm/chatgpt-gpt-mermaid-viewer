@@ -1,12 +1,10 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const { spawn } = require("child_process");
-const crypto = require("crypto");
 
 const app = express();
 app.use(bodyParser.json({ limit: "1mb" }));
 
-// Health check route
 app.get("/", (req, res) => {
   res.send("Mermaid render service is alive!");
 });
@@ -18,11 +16,12 @@ app.post("/render", async (req, res) => {
       return res.status(400).send("`diagram` must be a string");
     }
 
-    // Create subprocess for mmdc
     const mmdc = spawn("npx", [
       "mmdc",
+      "-i",
+      "-",
       "-o",
-      "stdout",
+      "/dev/stdout",
       "--puppeteerConfigFile",
       "puppeteer-config.json",
     ]);
@@ -39,8 +38,11 @@ app.post("/render", async (req, res) => {
     });
 
     mmdc.on("close", (code) => {
-      if (code !== 0) {
-        console.error("Mermaid CLI error:", errorOutput);
+      if (code !== 0 || !svgOutput.includes("<svg")) {
+        console.error(
+          "Mermaid CLI error:",
+          errorOutput || "Invalid SVG output"
+        );
         return res.status(500).send("Error rendering diagram");
       }
 
@@ -68,7 +70,6 @@ app.post("/render", async (req, res) => {
       res.send(html);
     });
 
-    // Send input to stdin
     mmdc.stdin.write(diagram);
     mmdc.stdin.end();
   } catch (err) {
