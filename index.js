@@ -4,6 +4,7 @@ const { exec } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const os = require("os");
 
 const app = express();
 app.use(bodyParser.json({ limit: "1mb" }));
@@ -20,33 +21,31 @@ app.post("/render", async (req, res) => {
     return res.status(400).send("`diagram` must be a string");
   }
 
-  // Generate a unique filename
+  // Use a temp dir for serverless
+  const TMP = os.tmpdir();
   const id = crypto.randomBytes(8).toString("hex");
-  const inputPath = path.join(__dirname, "code", `${id}.mmd`);
-  const outputPath = path.join(OUTPUT_DIR, `${id}.svg`);
+  const inputPath = path.join(TMP, `${id}.mmd`);
+  const outputPath = path.join(TMP, `${id}.svg`);
 
   // Write the .mmd file
   fs.writeFileSync(inputPath, diagram, "utf8");
 
-  // Run Mermaid CLI
   exec(
     `npx mmdc -i "${inputPath}" -o "${outputPath}"`,
     (err, stdout, stderr) => {
-      // Clean up input file
+      // Always clean up the input file
       fs.unlinkSync(inputPath);
 
       if (err) {
-        console.error(stderr);
+        console.error("Mermaid CLI error:", stderr);
         return res.status(500).send("Error rendering diagram");
       }
 
-      // Read the SVG back
+      // Read & clean up the SVG
       const svg = fs.readFileSync(outputPath, "utf8");
+      fs.unlinkSync(outputPath);
 
-      // Optional: delete the SVG after reading, or keep for caching
-      // fs.unlinkSync(outputPath);
-
-      // Wrap in a scrollable container with toolbar
+      // Wrap & return
       const html = `
 <div style="max-width:100%; overflow:auto; border:1px solid #ddd; padding:8px; border-radius:4px;">
   <div style="margin-bottom:4px;">
@@ -66,7 +65,6 @@ app.post("/render", async (req, res) => {
   }
 </script>
       `;
-
       res.setHeader("Content-Type", "text/html");
       res.send(html);
     }
