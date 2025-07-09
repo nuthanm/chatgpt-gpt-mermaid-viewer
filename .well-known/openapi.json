@@ -7,8 +7,8 @@
   },
   "servers": [
     {
-      "url": "https://nuthanm.github.io/chatgpt-gpt-mermaid-viewer",
-      "description": "GitHub Pages host for Mermaid Live Preview"
+      "url": "https://chatgpt-gpt-mermaid-viewer.vercel.app",
+      "description": "Vercel host for Mermaid Live Preview"
     }
   ],
   "paths": {
