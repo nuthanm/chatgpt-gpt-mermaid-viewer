@@ -1,6 +1,9 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const { spawn } = require("child_process");
+const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 app.use(bodyParser.json({ limit: "1mb" }));
@@ -16,35 +19,33 @@ app.post("/render", async (req, res) => {
       return res.status(400).send("`diagram` must be a string");
     }
 
+    const id = crypto.randomBytes(6).toString("hex");
+    const outPath = `/tmp/${id}.svg`; // Railway-compatible temporary location
+
     const mmdc = spawn("npx", [
       "mmdc",
       "-i",
       "-",
       "-o",
-      "/dev/stdout",
+      outPath,
       "--puppeteerConfigFile",
       "puppeteer-config.json",
     ]);
 
-    let svgOutput = "";
     let errorOutput = "";
-
-    mmdc.stdout.on("data", (data) => {
-      svgOutput += data.toString();
-    });
 
     mmdc.stderr.on("data", (data) => {
       errorOutput += data.toString();
     });
 
     mmdc.on("close", (code) => {
-      if (code !== 0 || !svgOutput.includes("<svg")) {
-        console.error(
-          "Mermaid CLI error:",
-          errorOutput || "Invalid SVG output"
-        );
+      if (code !== 0 || !fs.existsSync(outPath)) {
+        console.error("Mermaid CLI error:", errorOutput);
         return res.status(500).send("Error rendering diagram");
       }
+
+      const svgOutput = fs.readFileSync(outPath, "utf8");
+      fs.unlinkSync(outPath); // clean up
 
       const html = `
 <div style="max-width:100%; overflow:auto; border:1px solid #ddd; padding:8px; border-radius:4px;">
