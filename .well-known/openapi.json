@@ -5,6 +5,12 @@
     "version": "1.0.0",
     "description": "Renders Mermaid diagrams into inline SVG/HTML widgets"
   },
+  "servers": [
+    {
+      "url": "https://nuthanm.github.io/chatgpt-gpt-mermaid-viewer",
+      "description": "GitHub Pages host for Mermaid Live Preview"
+    }
+  ],
   "paths": {
     "/render": {
       "post": {
