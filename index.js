@@ -4,83 +4,73 @@ const { exec } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
-const os = require("os");
 
 const app = express();
 app.use(bodyParser.json({ limit: "1mb" }));
 
-// Logger
-app.use((req, res, next) => {
-  console.log(`→ ${req.method} ${req.url}`);
-  next();
-});
+// Ensure output directory exists
+const OUTPUT_DIR = path.join(__dirname, "Render Images");
+if (!fs.existsSync(OUTPUT_DIR)) {
+  fs.mkdirSync(OUTPUT_DIR);
+}
 
-// Health check
-app.get("/render", (_, res) => {
-  res.send(
-    'Mermaid-render service is up! POST to /render with {"diagram":"..."}'
-  );
-});
-
-app.post("/render", (req, res) => {
+app.post("/render", async (req, res) => {
   const { diagram } = req.body;
   if (typeof diagram !== "string") {
     return res.status(400).send("`diagram` must be a string");
   }
 
-  // Temp file paths
-  const tmp = os.tmpdir();
+  // Generate a unique filename
   const id = crypto.randomBytes(8).toString("hex");
-  const inF = path.join(tmp, `${id}.mmd`);
-  const outF = path.join(tmp, `${id}.svg`);
+  const inputPath = path.join(__dirname, "code", `${id}.mmd`);
+  const outputPath = path.join(OUTPUT_DIR, `${id}.svg`);
 
-  // Write diagram to temp file
-  fs.writeFileSync(inF, diagram, "utf8");
+  // Write the .mmd file
+  fs.writeFileSync(inputPath, diagram, "utf8");
 
-  // Build the shell command
-  // Note the quotes around paths to handle spaces on Windows
-  const cmd = `npx mmdc -i "${inF}" -o "${outF}"`;
+  // Run Mermaid CLI
+  exec(
+    `npx mmdc -i "${inputPath}" -o "${outputPath}"`,
+    (err, stdout, stderr) => {
+      // Clean up input file
+      fs.unlinkSync(inputPath);
 
-  // Execute in a shell
-  exec(cmd, { maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
-    // Clean up the input file
-    try {
-      fs.unlinkSync(inF);
-    } catch {}
+      if (err) {
+        console.error(stderr);
+        return res.status(500).send("Error rendering diagram");
+      }
 
-    if (err) {
-      console.error("Mermaid CLI error:", stderr || err.message);
-      return res
-        .status(500)
-        .send("Error rendering diagram:\n" + (stderr || err.message));
-    }
+      // Read the SVG back
+      const svg = fs.readFileSync(outputPath, "utf8");
 
-    // Read and remove the SVG
-    let svg;
-    try {
-      svg = fs.readFileSync(outF, "utf8");
-      fs.unlinkSync(outF);
-    } catch (e) {
-      console.error("SVG read error:", e);
-      return res.status(500).send("Error reading SVG");
-    }
+      // Optional: delete the SVG after reading, or keep for caching
+      // fs.unlinkSync(outputPath);
 
-    // Wrap in scrollable container + toolbar
-    const html = `
+      // Wrap in a scrollable container with toolbar
+      const html = `
 <div style="max-width:100%; overflow:auto; border:1px solid #ddd; padding:8px; border-radius:4px;">
   <div style="margin-bottom:4px;">
-    <button onclick="navigator.clipboard.writeText(\`${svg.replace(
-      /`/g,
-      "\\`"
-    )}\`)" style="margin-right:8px;">Copy</button>
-    <button onclick="window.open().document.write(\`${svg}\`)">View Full Size</button>
+    <button onclick="copySVG()">Copy</button>
+    <button onclick="openFull()">View Full Size</button>
   </div>
   ${svg}
-</div>`;
+</div>
+<script>
+  function copySVG() {
+    navigator.clipboard.writeText(\`${svg.replace(/`/g, "\\`")}\`);
+    alert('SVG copied to clipboard');
+  }
+  function openFull() {
+    const w = window.open();
+    w.document.write(\`${svg}\`);
+  }
+</script>
+      `;
 
-    res.setHeader("Content-Type", "text/html");
-    res.send(html);
-  });
+      res.setHeader("Content-Type", "text/html");
+      res.send(html);
+    }
+  );
 });
 
 const PORT = process.env.PORT || 3000;
