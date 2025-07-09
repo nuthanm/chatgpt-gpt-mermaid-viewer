@@ -35,9 +35,14 @@ app.post("/render", (req, res) => {
 
   // Write the .mmd file to temp
   fs.writeFileSync(inputPath, diagram, "utf8");
-
+  const mmdcBin = path.join(
+    __dirname,
+    "node_modules",
+    ".bin",
+    process.platform === "win32" ? "mmdc.cmd" : "mmdc"
+  );
   exec(
-    `npx mmdc -i "${inputPath}" -o "${outputPath}"`,
+    `"${mmdcBin}" -i "${inputPath}" -o "${outputPath}"`,
     (err, stdout, stderr) => {
       // Always clean up the input file
       fs.unlinkSync(inputPath);
