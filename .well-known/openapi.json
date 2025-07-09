@@ -1,0 +1,47 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Mermaid Live Preview API",
+    "version": "1.0.0",
+    "description": "Renders Mermaid diagrams into inline SVG/HTML widgets"
+  },
+  "paths": {
+    "/render": {
+      "post": {
+        "summary": "Render a Mermaid diagram",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "diagram": {
+                    "type": "string",
+                    "description": "Mermaid source code"
+                  }
+                },
+                "required": ["diagram"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "HTML snippet containing SVG preview",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "description": "HTML + SVG preview"
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid request" },
+          "500": { "description": "Rendering error" }
+        }
+      }
+    }
+  }
+}
