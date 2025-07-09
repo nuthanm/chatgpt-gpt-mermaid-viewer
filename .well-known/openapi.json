@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://chatgpt-gpt-mermaid-viewer.vercel.app",
+      "url": "https://mermaid-viewer.onrender.com",
       "description": "Vercel host for Mermaid Live Preview"
     }
   ],
